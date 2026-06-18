@@ -10,15 +10,11 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3i;
 import dev.ryanhcode.sable.index.SableTags;
 import dev.ryanhcode.sable.mixinterface.plot.serialization.LevelChunkTicksExtension;
-import dev.ryanhcode.sable.platform.SableChunkEventPlatform;
 import dev.ryanhcode.sable.platform.SablePlotPlatform;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -51,7 +47,9 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.ticks.LevelChunkTicks;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -71,12 +69,12 @@ public class ServerLevelPlot extends LevelPlot {
     /**
      * All kinematic contraption children
      */
-    private final Set<KinematicContraption> contraptions = new ReferenceOpenHashSet<>();
+    private final ObjectSet<KinematicContraption> contraptions = new ObjectOpenHashSet<>();
 
     /**
      * All LiftProviders within this plot.
      */
-    private final Long2ObjectMap<BlockSubLevelLiftProvider.LiftProviderContext> liftProviders = new Long2ObjectOpenHashMap<>();
+    private final Object2ObjectMap<BlockPos, BlockSubLevelLiftProvider.LiftProviderContext> liftProviders = new Object2ObjectOpenHashMap<>();
 
     /**
      * Creates a new plot at the given plot coordinate.
@@ -113,7 +111,7 @@ public class ServerLevelPlot extends LevelPlot {
     /**
      * @return all kinematic contraption children
      */
-    public Collection<KinematicContraption> getContraptions() {
+    public ObjectCollection<KinematicContraption> getContraptions() {
         return this.contraptions;
     }
 
@@ -225,14 +223,14 @@ public class ServerLevelPlot extends LevelPlot {
         final LevelChunk chunk = holder.getChunk();
 
         // Update the chunk map if one exists
-        final ServerChunkCache cache = level.getChunkSource();
-        cache.chunkMap.updatingChunkMap.put(globalChunkPos.toLong(), holder);
-        cache.chunkMap.modified = true;
+        if (level.getChunkSource() instanceof final ServerChunkCache cache) {
+           cache.chunkMap.updatingChunkMap.put(globalChunkPos.toLong(), holder);
+           cache.chunkMap.modified = true;
+        }
 
         super.addChunkHolder(localChunkPos, holder, initializeLighting);
 
         chunk.setLightCorrect(false);
-
         // light chunk
         if (initializeLighting) {
             this.lightChunk(chunk);
@@ -552,9 +550,7 @@ public class ServerLevelPlot extends LevelPlot {
 
             chunk.registerAllBlockEntitiesAfterLevelLoad();
             level.startTickingChunk(chunk);
-
             SablePlotPlatform.INSTANCE.postLoad(chunkTag, chunk);
-            SableChunkEventPlatform.INSTANCE.onPlotChunkLoaded(chunk);
         }
 
         // Before we send the chunks, let's ensure our lighting data is complete
@@ -663,10 +659,10 @@ public class ServerLevelPlot extends LevelPlot {
     public void onBlockChange(final BlockPos pos, final BlockState state) {
         super.onBlockChange(pos, state);
 
-        this.liftProviders.remove(pos.asLong());
+        this.liftProviders.remove(pos);
 
         if (state.getBlock() instanceof final BlockSubLevelLiftProvider prov) {
-            this.liftProviders.put(pos.asLong(), new BlockSubLevelLiftProvider.LiftProviderContext(pos, state, Vec3.atLowerCornerOf(prov.sable$getNormal(state).getNormal())));
+            this.liftProviders.put(pos, new BlockSubLevelLiftProvider.LiftProviderContext(pos, state, Vec3.atLowerCornerOf(prov.sable$getNormal(state).getNormal())));
         }
     }
 

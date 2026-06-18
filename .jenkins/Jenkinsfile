@@ -16,17 +16,13 @@ pipeline {
                 sh './gradlew clean'
             }
         }
-        stage('Build Release') {
+        stage('Build') {
             steps {
                 echo 'Building'
                 sh './gradlew build'
             }
         }
-        stage('Publish Release') {
-            environment {
-                MAVEN_PUBLISH_URL = 'https://maven.ryanhcode.dev/releases'
-            }
-
+        stage('Publish') {
             steps {
                 echo 'Deploying to Maven'
                 withCredentials([

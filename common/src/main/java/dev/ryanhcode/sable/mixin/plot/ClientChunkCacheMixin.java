@@ -4,12 +4,15 @@ import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.mixin.loaded_chunk_debug.ClientChunkCacheStorageAccessor;
 import dev.ryanhcode.sable.mixinterface.loaded_chunk_debug.DebugChunkProviderAttachments;
 import dev.ryanhcode.sable.platform.SableChunkEventPlatform;
+import dev.ryanhcode.sable.sublevel.SubLevel;
+import dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder;
 import net.minecraft.client.multiplayer.ClientChunkCache;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundLevelChunkPacketData;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +131,7 @@ public abstract class ClientChunkCacheMixin implements DebugChunkProviderAttachm
             this.level.onChunkLoaded(chunkPos);
             this.level.getLightEngine().setLightEnabled(chunkPos, true);
 
-            SableChunkEventPlatform.INSTANCE.onClientChunkPacketReplaced(levelChunk);
+            SableChunkEventPlatform.INSTANCE.onChunkPacketReplaced(levelChunk);
             cir.setReturnValue(levelChunk);
         }
     }

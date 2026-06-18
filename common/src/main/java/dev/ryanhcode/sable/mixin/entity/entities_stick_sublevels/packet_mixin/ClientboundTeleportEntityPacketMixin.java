@@ -19,6 +19,7 @@ public class ClientboundTeleportEntityPacketMixin implements PacketActuallyInSub
 
     @Inject(method = "<init>(Lnet/minecraft/network/FriendlyByteBuf;)V", at = @At("RETURN"))
     private void sable$readActuallyInSubLevel(final FriendlyByteBuf friendlyByteBuf, final CallbackInfo ci) {
+        if (!friendlyByteBuf.isReadable()) return; // vanilla/Paper server — no extra byte
         this.sable$setActuallyInSubLevel(friendlyByteBuf.readBoolean());
     }
 

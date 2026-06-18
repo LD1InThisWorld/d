@@ -41,7 +41,7 @@ public class CameraTypeMixin {
 
     @Invoker(value = "<init>")
     private static CameraType create(final String name, final int ordinal, final boolean firstPerson, final boolean mirrored) {
-        throw new AssertionError("Unreachable");
+        throw new IllegalStateException("Unreachable");
     }
 
     /**

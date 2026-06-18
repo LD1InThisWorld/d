@@ -11,7 +11,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
 public class BeltBlockCallback implements BlockSubLevelCollisionCallback {
@@ -20,7 +19,7 @@ public class BeltBlockCallback implements BlockSubLevelCollisionCallback {
     private BeltBlockCallback() {}
 
     @Override
-    public BlockSubLevelCollisionCallback.CollisionResult sable$onCollision(final BlockPos pos, @Nullable final BlockPos otherHitBlockPos, final Vector3d pos1, final double impactVelocity) {
+    public BlockSubLevelCollisionCallback.CollisionResult sable$onCollision(final BlockPos pos, final Vector3d pos1, final double impactVelocity) {
         final SubLevelPhysicsSystem system = SubLevelPhysicsSystem.getCurrentlySteppingSystem();
         final ServerLevel level = system.getLevel();
 

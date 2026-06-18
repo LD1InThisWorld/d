@@ -110,13 +110,10 @@ public class SubLevelSerializer {
             }
         }
 
-        final Pose3d pose = SableNBTUtils.readPose3d(tag.getCompound("pose"));
-        final BoundingBox3d worldBounds = SableNBTUtils.readBoundingBox(tag.getCompound("world_bounds"));
-
         return new SubLevelData(
                 uuid,
-                worldBounds,
-                pose,
+                SableNBTUtils.readBoundingBox(tag.getCompound("world_bounds")),
+                SableNBTUtils.readPose3d(tag.getCompound("pose")),
                 dependencies,
                 tag
         );
@@ -197,8 +194,6 @@ public class SubLevelSerializer {
             subLevel.setUserDataTag(tag.getCompound("user_data"));
         }
 
-        subLevel.updateBoundingBox();
-        subLevel.forceUpdateGlobalBounds();
         return subLevel;
     }
 

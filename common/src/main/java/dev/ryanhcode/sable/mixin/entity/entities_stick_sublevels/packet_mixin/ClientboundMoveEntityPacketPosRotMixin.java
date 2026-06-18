@@ -35,6 +35,7 @@ public class ClientboundMoveEntityPacketPosRotMixin implements PacketActuallyInS
 
     @Inject(method = "read", at = @At("RETURN"))
     private static void sable$readActuallyInSubLevel(final FriendlyByteBuf friendlyByteBuf, final CallbackInfoReturnable<ClientboundMoveEntityPacket.Pos> cir) {
+        if (!friendlyByteBuf.isReadable()) return; // vanilla/Paper server — no extra byte
         ((PacketActuallyInSubLevelExtension) cir.getReturnValue()).sable$setActuallyInSubLevel(friendlyByteBuf.readBoolean());
     }
 

@@ -72,7 +72,7 @@ public abstract class ClientPacketListenerMixin {
         final SubLevel subLevel = Sable.HELPER.getContaining(this.level, pos);
         final Vec3 plotPosition = extension.sable$getPlotPosition();
 
-        if (!actuallyInSubLevel && subLevel == null && container.inBounds(BlockPos.containing(pos))) {
+        if (!actuallyInSubLevel && subLevel == null && container.inBounds(BlockPos.containing(pos)) && container.getLoadedCount() > 0) {
             return;
         }
 

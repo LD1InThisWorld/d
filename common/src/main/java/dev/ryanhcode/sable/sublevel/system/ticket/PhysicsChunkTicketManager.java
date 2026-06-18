@@ -1,6 +1,5 @@
 package dev.ryanhcode.sable.sublevel.system.ticket;
 
-import dev.ryanhcode.sable.SableConfig;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.object.ArbitraryPhysicsObject;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
@@ -26,7 +25,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3d;
 
@@ -85,8 +83,6 @@ public class PhysicsChunkTicketManager {
         this.expireForcedInhabitedChunks(gameTime, distanceManager);
 
         final LongOpenHashSet unloadedChunks = new LongOpenHashSet();
-
-        final boolean cannotUnloadPlayerInhabited = SableConfig.SUB_LEVELS_WITH_PLAYERS_CANNOT_UNLOAD.getAsBoolean();
 
         final BoundingBox3d b = new BoundingBox3d();
         final BoundingBox3d b2 = new BoundingBox3d();
@@ -155,40 +151,53 @@ public class PhysicsChunkTicketManager {
             b.expand(1.0, b);
             final BoundingBox3i chunkBounds = b.chunkBoundsFrom();
 
-            boolean checkedPlayerInhabited = false;
-            boolean playerInhabited = false;
-
             for (int x = chunkBounds.minX(); x <= chunkBounds.maxX(); x++) {
                 for (int z = chunkBounds.minZ(); z <= chunkBounds.maxZ(); z++) {
-                    final long chunkLong = ChunkPos.asLong(x, z);
+                    final long l = ChunkPos.asLong(x, z);
 
                     final boolean chunkLoadedEnough = isChunkLoadedEnough(level, x, z);
 
                     if (forceLoaded.contains(subLevel)) {
-                        this.inhabitChunk(level, distanceManager, uuid, gameTime, chunkLong, x, z);
+                        ObjectArraySet<InhabitedChunkTicket> set = this.forcedInhabitedChunks.get(l);
+
+                        if (set == null) {
+                            this.forcedInhabitedChunks.put(l, set = new ObjectArraySet<>(1));
+                        }
+
+                        final Ticket<UUID> newChunkTicket = new Ticket<>(PhysicsChunkTicketManager.SUB_LEVEL_LOADED_TICKET_TYPE, ChunkLevel.byStatus(FullChunkStatus.ENTITY_TICKING), uuid);
+                        final InhabitedChunkTicket newSableTicket = new InhabitedChunkTicket(uuid, gameTime, newChunkTicket);
+
+                        if (set.add(newSableTicket)) {
+                            distanceManager.addTicket(l, newChunkTicket);
+                            distanceManager.tickingTicketsTracker.addTicket(l, newChunkTicket);
+
+                            level.getChunk(x, z, ChunkStatus.FULL, true);
+                        } else {
+                            boolean any = false;
+
+                            for (final InhabitedChunkTicket ticket : set) {
+                               if (ticket.equals(newSableTicket)) {
+                                   ticket.setLastInhabitedTick(gameTime);
+                                   any = true;
+                                   break;
+                               }
+                            }
+
+                            if (!any) {
+                                throw new RuntimeException("Chunk ticket state management has gone horribly wrong.");
+                            }
+                        }
                     } else {
-                        if (!chunkLoadedEnough || unloadedChunks.contains(chunkLong)) {
+                        if (!chunkLoadedEnough || unloadedChunks.contains(l)) {
                             // The sub-level has now entered an unloaded chunk.
-                            unloadedChunks.add(chunkLong);
+                            unloadedChunks.add(l);
 
-                            if (!checkedPlayerInhabited && cannotUnloadPlayerInhabited) {
-                                playerInhabited = !level.getPlayers(player -> {
-                                    final Vec3 position = player.getBoundingBox().getCenter();
-                                    return b.contains(position.x, position.y, position.z);
-                                }).isEmpty();
-                                checkedPlayerInhabited = true;
-                            }
+                            holdingChunkMap.moveToUnloaded(subLevel, new ChunkPos(x, z));
 
-                            if (!cannotUnloadPlayerInhabited || !playerInhabited) {
-                                holdingChunkMap.moveToUnloaded(subLevel, new ChunkPos(x, z));
+                            // Because we just removed this sub-level, we need to decrement the index to avoid skipping the next sub-level
+                            i--;
 
-                                // Because we just removed this sub-level, we need to decrement the index to avoid skipping the next sub-level
-                                i--;
-
-                                continue subLevelLoop;
-                            } else {
-                                this.inhabitChunk(level, distanceManager, uuid, gameTime, chunkLong, x, z);
-                            }
+                            continue subLevelLoop;
                         }
                     }
                 }
@@ -210,47 +219,6 @@ public class PhysicsChunkTicketManager {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Marks a chunk as sub-level inhabited and force-loads it as a result
-     */
-    private void inhabitChunk(final ServerLevel level,
-                              final DistanceManager distanceManager,
-                              final UUID subLevelId,
-                              final long gameTime,
-                              final long chunkLong,
-                              final int x,
-                              final int z) {
-        ObjectArraySet<InhabitedChunkTicket> set = this.forcedInhabitedChunks.get(chunkLong);
-
-        if (set == null) {
-            this.forcedInhabitedChunks.put(chunkLong, set = new ObjectArraySet<>(1));
-        }
-
-        final Ticket<UUID> newChunkTicket = new Ticket<>(PhysicsChunkTicketManager.SUB_LEVEL_LOADED_TICKET_TYPE, ChunkLevel.byStatus(FullChunkStatus.ENTITY_TICKING), subLevelId);
-        final InhabitedChunkTicket newSableTicket = new InhabitedChunkTicket(subLevelId, gameTime, newChunkTicket);
-
-        if (set.add(newSableTicket)) {
-            distanceManager.addTicket(chunkLong, newChunkTicket);
-            distanceManager.tickingTicketsTracker.addTicket(chunkLong, newChunkTicket);
-
-            level.getChunk(x, z, ChunkStatus.FULL, true);
-        } else {
-            boolean any = false;
-
-            for (final InhabitedChunkTicket ticket : set) {
-               if (ticket.equals(newSableTicket)) {
-                   ticket.setLastInhabitedTick(gameTime);
-                   any = true;
-                   break;
-               }
-            }
-
-            if (!any) {
-                throw new RuntimeException("Chunk ticket state management has gone horribly wrong.");
             }
         }
     }

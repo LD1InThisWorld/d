@@ -47,6 +47,9 @@ public abstract class SubLevel implements SubLevelAccess {
      */
     protected final BoundingBox3d lastGlobalBounds = new BoundingBox3d(0, 0, 0, 0, 0, 0);
 
+    /**
+     *
+     */
     private final Matrix4d globalBoundsTransform = new Matrix4d();
 
     /**
@@ -130,11 +133,6 @@ public abstract class SubLevel implements SubLevelAccess {
         this.lastGlobalBounds.set(this.globalBounds);
         this.globalBounds.set(plotBounds.minX(), plotBounds.minY(), plotBounds.minZ(), plotBounds.maxX() + 1.0, plotBounds.maxY() + 1.0, plotBounds.maxZ() + 1.0);
         this.globalBounds.transform(this.pose, this.globalBoundsTransform, this.globalBounds);
-    }
-
-    @ApiStatus.Internal
-    public void forceUpdateGlobalBounds() {
-        this.lastGlobalBounds.set(this.globalBounds);
     }
 
     /**

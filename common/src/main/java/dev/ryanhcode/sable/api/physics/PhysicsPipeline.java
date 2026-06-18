@@ -16,7 +16,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniondc;
@@ -217,22 +216,12 @@ public interface PhysicsPipeline {
     /**
      * Adds a constraint to the engine, returning its handle
      *
-     * @param bodyA     the first body to constrain, or null to constrain the second body to the world
-     * @param bodyB     the second body to constrain, or null to constrain the first body to the world
+     * @param sublevelA     the first sub-level to constrain, or null to constrain the second sub-level to the world
+     * @param sublevelB     the second sub-level to constrain, or null to constrain the first sub-level to the world
      * @param configuration the configuration of the constraint
      */
-    @Nullable
-    @Contract("null, null, _ -> fail")
-    default <T extends PhysicsConstraintHandle> T addConstraint(@Nullable final PhysicsPipelineBody bodyA, @Nullable final PhysicsPipelineBody bodyB, @NotNull final PhysicsConstraintConfiguration<T> configuration) {
-        if (bodyA == null && bodyB == null) {
-            throw new IllegalArgumentException("Cannot add a constraint between the static world and static world");
-        }
-
-        if (bodyA == bodyB) {
-            throw new IllegalArgumentException("Cannot add a constraint between a body and itself");
-        }
-
-        return null;
+    default <T extends PhysicsConstraintHandle> T addConstraint(@Nullable final ServerSubLevel sublevelA, @Nullable final ServerSubLevel sublevelB, final PhysicsConstraintConfiguration<T> configuration) {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     /**
@@ -242,7 +231,7 @@ public interface PhysicsPipeline {
      */
     @ApiStatus.OverrideOnly
     default void updateConfigFrom(final PhysicsConfigData data) {
-
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     /**

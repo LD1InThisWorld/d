@@ -62,7 +62,7 @@ public abstract class AbstractContraptionEntityMixin extends Entity implements K
     @Unique
     private MassTracker sable$massTracker;
     @Unique
-    private boolean sable$initialized = false;
+    private boolean sable$added = false;
 
     public AbstractContraptionEntityMixin(final EntityType<?> arg, final Level arg2) {
         super(arg, arg2);
@@ -96,18 +96,11 @@ public abstract class AbstractContraptionEntityMixin extends Entity implements K
 
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Ljava/util/Map;entrySet()Ljava/util/Set;"), remap = false)
     private void sable$contraptionInitialize(final CallbackInfo ci) {
-        if (!this.sable$initialized && this.level() instanceof final ServerLevel serverLevel) {
+        if (!this.sable$added && this.level() instanceof final ServerLevel serverLevel) {
             this.sable$buildProperties();
-
-            if (this.sable$massTracker == null || this.sable$massTracker.getCenterOfMass() == null) {
-                // The contraption is effectively empty, quit early
-                this.sable$initialized = true;
-                return;
-            }
-
             this.sable$addToPlot();
             this.sable$addToPipeline(serverLevel);
-            this.sable$initialized = true;
+            this.sable$added = true;
         }
     }
 
@@ -169,11 +162,7 @@ public abstract class AbstractContraptionEntityMixin extends Entity implements K
                 this.sable$floatingClusterContainer.addFloatingBlock(state, new Vector3d(blockPos.getX(), blockPos.getY(), blockPos.getZ()));
         }
 
-        if (this.sable$localBounds == null) {
-            this.sable$massTracker = null;
-            return;
-        }
-
+        assert this.sable$localBounds != null;
         this.sable$massTracker = MassTracker.build(this.sable$blockGetter(), this.sable$localBounds);
         final Vector3d temp = this.sable$massTracker.getCenterOfMass().negate(new Vector3d()).add(0.5, 0.5, 0.5);
         for (final FloatingBlockCluster cluster : this.sable$floatingClusterContainer.clusters) {

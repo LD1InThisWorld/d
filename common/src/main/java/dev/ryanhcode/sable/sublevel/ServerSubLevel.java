@@ -301,7 +301,8 @@ public class ServerSubLevel extends SubLevel implements PhysicsPipelineBody {
         }
 
         final ObjectCollection<BlockSubLevelLiftProvider.LiftProviderContext> liftProviders = plot.getLiftProviders();
-        final Collection<KinematicContraption> contraptions = plot.getContraptions();
+        final ObjectCollection<KinematicContraption> contraptions = plot.getContraptions();
+
 
         if (!liftProviders.isEmpty() || this.floatingBlockController.needsTicking() || this.reactionWheelManager.needsTicking() || !contraptions.isEmpty()) {
             final boolean trackForces = this.isTrackingIndividualQueuedForces();
